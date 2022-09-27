@@ -14,6 +14,7 @@
     startTime   : '08:00',                // HH:mm format
     endTime     : '20:00',                // HH:mm format
     interval    : 30,                     // minutes
+    timeFormat  : '24',                   // 24 or 12 supported
     stringDays  : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
     template    : '<div class="day-schedule-selector">'         +
                     '<table class="schedule-table">'            +
@@ -51,7 +52,8 @@
    * @public
    */
   DayScheduleSelector.prototype.renderRows = function () {
-    var start = this.options.startTime
+    var plugin = this,
+      start = this.options.startTime
       , end = this.options.endTime
       , interval = this.options.interval
       , days = this.options.days
@@ -62,7 +64,7 @@
         return '<td class="time-slot" data-time="' + hhmm(d) + '" data-day="' + days[i] + '"></td>'
       }).join();
 
-      $el.append('<tr><td class="time-label">' + hmmAmPm(d) + '</td>' + daysInARow + '</tr>');
+      $el.append('<tr><td class="time-label">' + plugin.hmmAmPm(d) + '</td>' + daysInARow + '</tr>');
     });
   };
 
@@ -206,6 +208,23 @@
     });
   };
 
+  /**
+   * Convert a Date object to time in H:mm format with am/pm
+   * @private
+   * @returns {String} Time in H:mm format with am/pm, e.g. '9:30am'
+   */
+  DayScheduleSelector.prototype.hmmAmPm = function (date) {
+    var hours = date.getHours()
+    , minutes = date.getMinutes(),
+    ampm = '';
+    if ( this.options.timeFormat != '24' ) {
+      hours = hours % 12;
+      hours = hours ? hours : 12;
+      ampm = hours >= 12 ? 'pm' : 'am';
+    }
+    return hours + ':' + ('0' + minutes).slice(-2) + ampm;
+  }
+
   // DayScheduleSelector Plugin Definition
   // =====================================
 
@@ -247,18 +266,6 @@
     // need a dummy date to utilize the Date object
     return (new Date(2000, 0, 1, end.split(':')[0], end.split(':')[1]).getTime() -
             new Date(2000, 0, 1, start.split(':')[0], start.split(':')[1]).getTime()) / 60000;
-  }
-
-  /**
-   * Convert a Date object to time in H:mm format with am/pm
-   * @private
-   * @returns {String} Time in H:mm format with am/pm, e.g. '9:30am'
-   */
-  function hmmAmPm(date) {
-    var hours = date.getHours()
-      , minutes = date.getMinutes()
-      , ampm = hours >= 12 ? 'pm' : 'am';
-    return hours + ':' + ('0' + minutes).slice(-2) + ampm;
   }
 
   /**
