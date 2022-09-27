@@ -5,6 +5,7 @@
   padding: 5px;
   background-color: #eee;
   cursor: pointer;
+  user-select: none;
 }
 .schedule-rows td:first-child {
   background-color: transparent;
