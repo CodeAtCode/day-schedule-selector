@@ -11,17 +11,17 @@
 
   DayScheduleSelector.DEFAULTS = {
     days: [ 0, 1, 2, 3, 4, 5, 6 ], // Sun - Sat
-    startTime: '08:00', // HH:mm format
-    endTime: '20:00', // HH:mm format
-    interval: 30, // minutes
-    timeFormat: '24', // 24 or 12 supported
-    stringDays: [ 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat' ],
-    template: '<div class="day-schedule-selector">' +
-      '<table class="schedule-table">' +
-      '<thead class="schedule-header"></thead>' +
-      '<tbody class="schedule-rows"></tbody>' +
-      '</table>' +
-      '<div>'
+  startTime: '08:00', // HH:mm format
+  endTime: '20:00', // HH:mm format
+  interval: 30, // minutes
+  timeFormat: '24', // 24 or 12 supported
+  stringDays: [ 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat' ],
+  template: '<div class="day-schedule-selector">' +
+  '<table class="schedule-table">' +
+  '<thead class="schedule-header"></thead>' +
+  '<tbody class="schedule-rows"></tbody>' +
+  '</table>' +
+  '<div>'
   };
 
   /**
@@ -99,15 +99,7 @@
    * @returns {Array} An array of selected time slots
    */
   DayScheduleSelector.prototype.getSelection = function() {
-    var $slots = this.$el.find( '.time-slot[data-selected="selected"]' );
-    var output = {};
-    $slots.each( function( key, timeslot ) {
-      if(typeof output[$(timeslot).attr('data-day')] === 'undefined') {
-        output[$(timeslot).attr('data-day')] = []
-      }
-        output[$(timeslot).attr('data-day')].push($(timeslot).attr('data-time'));
-    });
-    return output;
+    return this.serialize();
   };
 
   DayScheduleSelector.prototype.attachEvents = function() {
@@ -279,20 +271,20 @@
    */
   DayScheduleSelector.prototype.deserialize = function( schedule ) {
     var plugin = this,
-      i;
-    $.each( schedule, function( d, ds ) {
-      var $slots = plugin.$el.find( '.time-slot[data-day="' + d + '"]' );
-      $.each( ds, function( _, s ) {
-        for ( i = 0; i < $slots.length; i++ ) {
-          if ( $slots.eq( i ).data( 'time' ) >= s[ 1 ] ) {
-            break;
-          }
-          if ( $slots.eq( i ).data( 'time' ) >= s[ 0 ] ) {
-            plugin.select( $slots.eq( i ) );
-          }
+  i;
+  $.each( schedule, function( d, ds ) {
+    var $slots = plugin.$el.find( '.time-slot[data-day="' + d + '"]' );
+    $.each( ds, function( _, s ) {
+      for ( i = 0; i < $slots.length; i++ ) {
+        if ( $slots.eq( i ).data( 'time' ) >= s[ 1 ] ) {
+          break;
         }
-      } );
+        if ( $slots.eq( i ).data( 'time' ) >= s[ 0 ] ) {
+          plugin.select( $slots.eq( i ) );
+        }
+      }
     } );
+  } );
   };
 
   /**
@@ -352,7 +344,7 @@
   function timeDiff( start, end ) { // time in HH:mm format
     // need a dummy date to utilize the Date object
     return ( new Date( 2000, 0, 1, end.split( ':' )[ 0 ], end.split( ':' )[ 1 ] ).getTime() -
-      new Date( 2000, 0, 1, start.split( ':' )[ 0 ], start.split( ':' )[ 1 ] ).getTime() ) / 60000;
+    new Date( 2000, 0, 1, start.split( ':' )[ 0 ], start.split( ':' )[ 1 ] ).getTime() ) / 60000;
   }
 
   /**
@@ -379,13 +371,13 @@
   function secondsSinceMidnightToHhmm( seconds ) {
     var minutes = Math.floor( seconds / 60 );
     return ( '0' + Math.floor( minutes / 60 ) ).slice( -2 ) + ':' +
-      ( '0' + ( minutes % 60 ) ).slice( -2 );
+    ( '0' + ( minutes % 60 ) ).slice( -2 );
   }
 
   // Expose some utility functions
   window.DayScheduleSelector = {
     ssmToHhmm: secondsSinceMidnightToHhmm,
-    hhmmToSsm: hhmmToSecondsSinceMidnight
+  hhmmToSsm: hhmmToSecondsSinceMidnight
   };
 
 } )( jQuery );
