@@ -11,17 +11,17 @@
 
   DayScheduleSelector.DEFAULTS = {
     days: [ 0, 1, 2, 3, 4, 5, 6 ], // Sun - Sat
-  startTime: '08:00', // HH:mm format
-  endTime: '20:00', // HH:mm format
-  interval: 30, // minutes
-  timeFormat: '24', // 24 or 12 supported
-  stringDays: [ 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat' ],
-  template: '<div class="day-schedule-selector">' +
-  '<table class="schedule-table">' +
-  '<thead class="schedule-header"></thead>' +
-  '<tbody class="schedule-rows"></tbody>' +
-  '</table>' +
-  '<div>'
+    startTime: '08:00', // HH:mm format
+    endTime: '20:00', // HH:mm format
+    interval: 30, // minutes
+    timeFormat: '24', // 24 or 12 supported
+    stringDays: [ 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat' ],
+    template: '<div class="day-schedule-selector">' +
+      '<table class="schedule-table">' +
+      '<thead class="schedule-header"></thead>' +
+      '<tbody class="schedule-rows"></tbody>' +
+      '</table>' +
+      '<div>'
   };
 
   /**
@@ -44,7 +44,7 @@
     var html = '';
 
     $.each( days, function( i, _ ) {
-      html += '<th>' + ( stringDays[ i ] || '' ) + '</th>';
+      html += '<th>' + ( stringDays[ _ ] || '' ) + '</th>';
     } );
     this.$el.find( '.schedule-header' ).html( '<tr><th></th>' + html + '</tr>' );
   };
@@ -163,27 +163,31 @@
 
     this.$el.on( 'mouseover', '.time-slot', function() {
       var $slots, day, start, end, temp;
+      var columnDay = $('.schedule-table tr:first-child .time-slot').length;
       if ( plugin.isSelecting() ) { // if we are in selecting mode
         $slots = plugin.$el.find( '.time-slot' );
         day = plugin.$selectingStart.data( 'day' );
         $slots.filter( '[data-selecting]' ).removeAttr( 'data-selecting' );
         start = $slots.index( plugin.$selectingStart );
         end = $slots.index( this );
-        var startDayNumb = start % 7;
-        var endDayNumb = end % 7;
-        var dayRange = [ startDayNumb ];
-        for ( var i = 1; i <= Math.abs( startDayNumb - endDayNumb ); i++ ) {
-          if ( Math.sign( startDayNumb - endDayNumb ) > 0 ) {
-            dayRange.push( startDayNumb - i );
-          } else {
-            dayRange.push( startDayNumb + i );
-          }
+        var startDayNumb = parseInt( plugin.$selectingStart.attr('data-day') );
+        var endDayNumb = parseInt( $( this ).attr('data-day') );
+        var dayRange = [];
+        var diffDayNumb = Math.abs( startDayNumb - endDayNumb );
+        var countStart = startDayNumb;
+        var countEnd = endDayNumb;
+        if (startDayNumb > endDayNumb) {
+          countStart = endDayNumb
+          countEnd = startDayNumb;
+        }
+        for ( var i = countStart; i <= countEnd; i++ ) {
+          dayRange.push(i);
         }
         dayRange.sort();
         var mousePosition;
-        if ( Math.floor( ( start - end ) / 7 ) + 1 > 0 ) mousePosition = "top";
-        else if ( Math.floor( ( start - end ) / 7 ) + 1 == 0 ) mousePosition = "center";
-        else if ( Math.floor( ( start - end ) / 7 ) + 1 < 0 ) mousePosition = "bottom";
+        if ( Math.floor( ( start - end ) / columnDay ) + 1 > 0 ) mousePosition = "top";
+        else if ( Math.floor( ( start - end ) / columnDay ) + 1 == 0 ) mousePosition = "center";
+        else if ( Math.floor( ( start - end ) / columnDay ) + 1 < 0 ) mousePosition = "bottom";
 
         if ( Math.sign( startDayNumb - endDayNumb ) > 0 ) mousePosition += " left";
         else if ( Math.sign( startDayNumb - endDayNumb ) == 0 ) mousePosition += " center";
@@ -198,7 +202,7 @@
           switch ( mousePosition ) {
             case "top right":
             case "bottom left":
-              $slots.slice( start - Math.abs( startDayNumb - endDayNumb ), end + Math.abs( startDayNumb - endDayNumb ) + 1 ).filter( '[data-day="' + day + '"]' ).attr( 'data-selecting', purpose );
+              $slots.slice( start - diffDayNumb, end + diffDayNumb + 1 ).filter( '[data-day="' + day + '"]' ).attr( 'data-selecting', purpose );
               break;
             default:
               $slots.slice( start, end + 1 ).filter( '[data-day="' + day + '"]' ).attr( 'data-selecting', purpose );
@@ -223,37 +227,37 @@
    *    }
    */
   DayScheduleSelector.prototype.serialize = function() {
-    var plugin = this;
-    var selections = {};
+	  var plugin = this;
+	  var selections = {};
 
-    $.each( this.options.days, function( _, v ) {
-      var start, end;
-      start = end = false;
-      selections[ v ] = [];
-      plugin.$el.find( ".time-slot[data-day='" + v + "']" ).each( function() {
-        // Start of selection
-        if ( isSlotSelected( $( this ) ) && !start ) {
-          start = $( this ).data( 'time' );
-        }
+	  $.each( this.options.days, function( _, v ) {
+		  var start, end;
+		  start = end = false;
+		  selections[ v ] = [];
+		  plugin.$el.find( ".time-slot[data-day='" + v + "']" ).each( function() {
+			  // Start of selection
+			  if ( isSlotSelected( $( this ) ) && !start ) {
+				  start = $( this ).data( 'time' );
+			  }
 
-        // End of selection (I am not selected, so select until my previous one.)
-        if ( !isSlotSelected( $( this ) ) && !!start ) {
-          end = $( this ).data( 'time' );
-        }
+			  // End of selection (I am not selected, so select until my previous one.)
+			  if ( !isSlotSelected( $( this ) ) && !!start ) {
+				  end = $( this ).data( 'time' );
+			  }
 
-        // End of selection (I am the last one :) .)
-        if ( isSlotSelected( $( this ) ) && !!start && $( this ).is( $( this ).closest( 'tbody' ).find( ".time-slot[data-day='" + v + "']:last" ) ) ) {
-          end = secondsSinceMidnightToHhmm(
-            hhmmToSecondsSinceMidnight( $( this ).data( 'time' ) ) + plugin.options.interval * 60 );
-        }
+			  // End of selection (I am the last one :) .)
+			  if ( isSlotSelected( $( this ) ) && !!start && $( this ).is( $( this ).closest( 'tbody' ).find( ".time-slot[data-day='" + v + "']:last" ) ) ) {
+				  end = secondsSinceMidnightToHhmm(
+					  hhmmToSecondsSinceMidnight( $( this ).data( 'time' ) ) + plugin.options.interval * 60 );
+			  }
 
-        if ( !!end ) {
-          selections[ v ].push( [ start, end ] );
-          start = end = false;
-        }
-      } );
-    } );
-    return selections;
+			  if ( !!end ) {
+				  selections[ v ].push( [ start, end ] );
+				  start = end = false;
+			  }
+		  } );
+	  } );
+	  return selections;
   };
 
   /**
@@ -271,20 +275,20 @@
    */
   DayScheduleSelector.prototype.deserialize = function( schedule ) {
     var plugin = this,
-  i;
-  $.each( schedule, function( d, ds ) {
-    var $slots = plugin.$el.find( '.time-slot[data-day="' + d + '"]' );
-    $.each( ds, function( _, s ) {
-      for ( i = 0; i < $slots.length; i++ ) {
-        if ( $slots.eq( i ).data( 'time' ) >= s[ 1 ] ) {
-          break;
+      i;
+    $.each( schedule, function( d, ds ) {
+      var $slots = plugin.$el.find( '.time-slot[data-day="' + d + '"]' );
+      $.each( ds, function( _, s ) {
+        for ( i = 0; i < $slots.length; i++ ) {
+          if ( $slots.eq( i ).data( 'time' ) >= s[ 1 ] ) {
+            break;
+          }
+          if ( $slots.eq( i ).data( 'time' ) >= s[ 0 ] ) {
+            plugin.select( $slots.eq( i ) );
+          }
         }
-        if ( $slots.eq( i ).data( 'time' ) >= s[ 0 ] ) {
-          plugin.select( $slots.eq( i ) );
-        }
-      }
+      } );
     } );
-  } );
   };
 
   /**
@@ -344,7 +348,7 @@
   function timeDiff( start, end ) { // time in HH:mm format
     // need a dummy date to utilize the Date object
     return ( new Date( 2000, 0, 1, end.split( ':' )[ 0 ], end.split( ':' )[ 1 ] ).getTime() -
-    new Date( 2000, 0, 1, start.split( ':' )[ 0 ], start.split( ':' )[ 1 ] ).getTime() ) / 60000;
+      new Date( 2000, 0, 1, start.split( ':' )[ 0 ], start.split( ':' )[ 1 ] ).getTime() ) / 60000;
   }
 
   /**
@@ -371,13 +375,13 @@
   function secondsSinceMidnightToHhmm( seconds ) {
     var minutes = Math.floor( seconds / 60 );
     return ( '0' + Math.floor( minutes / 60 ) ).slice( -2 ) + ':' +
-    ( '0' + ( minutes % 60 ) ).slice( -2 );
+      ( '0' + ( minutes % 60 ) ).slice( -2 );
   }
 
   // Expose some utility functions
   window.DayScheduleSelector = {
     ssmToHhmm: secondsSinceMidnightToHhmm,
-  hhmmToSsm: hhmmToSecondsSinceMidnight
+    hhmmToSsm: hhmmToSecondsSinceMidnight
   };
 
 } )( jQuery );
