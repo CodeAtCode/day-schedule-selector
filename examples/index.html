@@ -22,7 +22,7 @@
         endTime: '21:06'
         */
       });
-      $("#day-schedule").on('selected.artsy.dayScheduleSelector', function (e, selected) {
+      $("#day-schedule").on('selecting.artsy.dayScheduleSelector', function (e, selected) {
         console.log(selected);
       })
       $("#day-schedule").data('artsy.dayScheduleSelector').deserialize({
