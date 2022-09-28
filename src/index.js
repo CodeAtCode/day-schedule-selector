@@ -99,29 +99,34 @@
 
   DayScheduleSelector.prototype.attachEvents = function () {
     var plugin = this
-      , options = this.options
-      , $slots;
+    , options = this.options
+    , $slots
+    , purpose;
 
     this.$el.on('click', '.time-slot', function () {
       var day = $(this).data('day');
+      purpose = isSlotSelected($(this)) ? 'deselecting' : 'selecting';
       if (!plugin.isSelecting()) {  // if we are not in selecting mode
-        if (isSlotSelected($(this))) { plugin.deselect($(this)); }
-        else {  // then start selecting
-          plugin.$selectingStart = $(this);
-          $(this).attr('data-selecting', 'selecting');
-          plugin.$el.find('.time-slot').attr('data-disabled', 'disabled');
-          plugin.$el.find('.time-slot[data-day="' + day + '"]').removeAttr('data-disabled');
-        }
+        plugin.$selectingStart = $(this);
+        $(this).attr('data-selecting', purpose);
+        plugin.$el.find('.time-slot').attr('data-disabled', 'disabled');
+        plugin.$el.find('.time-slot[data-day="' + day + '"]').removeAttr('data-disabled');
       } else {  // if we are in selecting mode
         if (day == plugin.$selectingStart.data('day')) {  // if clicking on the same day column
           // then end of selection
-          plugin.$el.find('.time-slot[data-day="' + day + '"]').filter('[data-selecting]')
-            .attr('data-selected', 'selected').removeAttr('data-selecting');
+          if(purpose === 'selecting'){
+            plugin.$el.find('.time-slot[data-day="' + day + '"]').filter('[data-selecting]').attr('data-selected', 'selected').removeAttr('data-selecting');
+          } else if(purpose === 'deselecting'){
+            plugin.$el.find('.time-slot[data-day="' + day + '"]').filter('[data-selecting]').removeAttr('data-selected').removeAttr('data-selecting');
+          }
+
           plugin.$el.find('.time-slot').removeAttr('data-disabled');
           plugin.$el.trigger('selected.artsy.dayScheduleSelector', [getSelection(plugin, plugin.$selectingStart, $(this))]);
           plugin.$selectingStart = null;
         }
       }
+
+      plugin.$el.trigger(purpose + '.artsy.dayScheduleSelector', [$(this)]);
     });
 
     this.$el.on('mouseover', '.time-slot', function () {
