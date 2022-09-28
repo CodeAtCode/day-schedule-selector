@@ -16,6 +16,7 @@
     interval    : 30,                     // minutes
     timeFormat  : '24',                   // 24 or 12 supported
     stringDays  : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+    onDataChange: function (new_data) {},
     template    : '<div class="day-schedule-selector">'         +
                     '<table class="schedule-table">'            +
                       '<thead class="schedule-header"></thead>' +
@@ -105,25 +106,57 @@
 
     this.$el.on('click', '.time-slot', function () {
       var day = $(this).data('day');
+      var bodyElement = $('html, body');
       purpose = isSlotSelected($(this)) ? 'deselecting' : 'selecting';
       if (!plugin.isSelecting()) {  // if we are not in selecting mode
         plugin.$selectingStart = $(this);
         $(this).attr('data-selecting', purpose);
         plugin.$el.find('.time-slot').attr('data-disabled', 'disabled');
         plugin.$el.find('.time-slot[data-day="' + day + '"]').removeAttr('data-disabled');
+        plugin.$el.trigger('dataChanged', [plugin.serialize()]);
+        options.onDataChange(plugin.serialize());
+        if (isSlotSelected($(this))) {
+          plugin.deselect($(this));
+        } else {  // then start selecting
+          bodyElement.mouseleave(function(event) {
+            var leftPageY = event.pageY;
+            var scrollTop = bodyElement.scrollTop();
+            var windowHeight = $(window).height();
+            var pageCenter = scrollTop + (windowHeight / 2);
+            var isScrollDown = (leftPageY > pageCenter);
+            var scrollDelta = isScrollDown ? 5 : -5;
+            var scrollInterval = 50;
+            var scrollTarget = leftPageY - (isScrollDown ? windowHeight : 0);
+
+            var _scrollDown = function() {
+              scrollTarget += scrollDelta;
+              bodyElement.scrollTop(scrollTarget);
+            };
+
+            _scrollDown();
+            var timerId = setInterval(_scrollDown, scrollInterval);
+
+            bodyElement.mouseenter(function() {
+              clearInterval(timerId);
+              bodyElement.off('mouseenter');
+            });
+          });
+        }
       } else {  // if we are in selecting mode
-        if (day == plugin.$selectingStart.data('day')) {  // if clicking on the same day column
-          // then end of selection
-          if(purpose === 'selecting'){
-            plugin.$el.find('.time-slot[data-day="' + day + '"]').filter('[data-selecting]').attr('data-selected', 'selected').removeAttr('data-selecting');
-          } else if(purpose === 'deselecting'){
-            plugin.$el.find('.time-slot[data-day="' + day + '"]').filter('[data-selecting]').removeAttr('data-selected').removeAttr('data-selecting');
-          }
+        //TODO: deve aggiungere anche la colonna di inizio
+        bodyElement.off('mouseleave');
+        bodyElement.off('mouseenter');
+        if(purpose === 'selecting') {
+          plugin.$el.find('.time-slot').filter('[data-selecting]').attr('data-selected', 'selected').removeAttr('data-selecting');
+        } else if(purpose === 'deselecting') {
+          plugin.$el.find('.time-slot').filter('[data-selecting]').removeAttr('data-selected').removeAttr('data-selecting');
+        }
 
           plugin.$el.find('.time-slot').removeAttr('data-disabled');
           plugin.$el.trigger('selected.artsy.dayScheduleSelector', [getSelection(plugin, plugin.$selectingStart, $(this))]);
+          plugin.$el.trigger('dataChanged', [plugin.serialize()]);
+          options.onDataChange(plugin.serialize());
           plugin.$selectingStart = null;
-        }
       }
 
       plugin.$el.trigger(purpose + '.artsy.dayScheduleSelector', [$(this)]);
@@ -132,14 +165,43 @@
     this.$el.on('mouseover', '.time-slot', function () {
       var $slots, day, start, end, temp;
       if (plugin.isSelecting()) {  // if we are in selecting mode
+        $slots = plugin.$el.find('.time-slot');
         day = plugin.$selectingStart.data('day');
-        $slots = plugin.$el.find('.time-slot[data-day="' + day + '"]');
         $slots.filter('[data-selecting]').removeAttr('data-selecting');
         start = $slots.index(plugin.$selectingStart);
         end = $slots.index(this);
+        var startDayNumb = start%7;
+        var endDayNumb = end%7;
+        var dayRange = [startDayNumb]
+        for(var i=1; i <= Math.abs(startDayNumb - endDayNumb); i++){
+          if(Math.sign(startDayNumb - endDayNumb) > 0){
+            dayRange.push(startDayNumb-i);
+          }else{
+            dayRange.push(startDayNumb+i);
+          }
+        }
+        dayRange.sort();
+        var mousePosition;
+        if(Math.floor((start - end)/7)+1 > 0) mousePosition = "top";
+        else if(Math.floor((start - end)/7)+1 == 0) mousePosition = "center";
+        else if(Math.floor((start - end)/7)+1 < 0) mousePosition = "bottom";
+
+        if(Math.sign(startDayNumb - endDayNumb) > 0) mousePosition += " left";
+        else if(Math.sign(startDayNumb - endDayNumb) == 0) mousePosition += " center";
+        else if(Math.sign(startDayNumb - endDayNumb) < 0) mousePosition += " right";
         if (end < 0) return;  // not hovering on the same column
         if (start > end) { temp = start; start = end; end = temp; }
-        $slots.slice(start, end + 1).attr('data-selecting', 'selecting');
+        dayRange.forEach(day => {
+          switch(mousePosition){
+            case "top right":
+            case "bottom left":
+              $slots.slice(start - Math.abs(startDayNumb - endDayNumb), end +  Math.abs(startDayNumb - endDayNumb) + 1).filter('[data-day="' + day + '"]').attr('data-selecting', purpose);
+              break;
+            default:
+              $slots.slice(start, end + 1).filter('[data-day="' + day + '"]').attr('data-selecting', purpose);
+              break;
+          }
+        })
       }
     });
   };

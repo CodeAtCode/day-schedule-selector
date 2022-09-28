@@ -9,5 +9,5 @@ Check `src/index.js` for the various parameters.
 ## Differences
 
 * Format hours 12/24
-* Delesect multiple timeslots [#31](https://github.com/artsy/day-schedule-selector/pull/31/), require a click to the first slot and to the latest one
+* Select/Delesect multiple timeslots [#42](https://github.com/artsy/day-schedule-selector/pull/42/), require a click to the first slot and to the latest one
 * Trigger events on select/deselect [#34](https://github.com/artsy/day-schedule-selector/pull/34) with some changes
