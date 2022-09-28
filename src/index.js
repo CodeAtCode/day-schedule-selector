@@ -100,8 +100,14 @@
    */
   DayScheduleSelector.prototype.getSelection = function() {
     var $slots = this.$el.find( '.time-slot[data-selected="selected"]' );
-    //TODO: generate JSON
-    return $slots;
+    var output = {};
+    $slots.each( function( key, timeslot ) {
+      if(typeof output[$(timeslot).attr('data-day')] === 'undefined') {
+        output[$(timeslot).attr('data-day')] = []
+      }
+        output[$(timeslot).attr('data-day')].push($(timeslot).attr('data-time'));
+    });
+    return output;
   };
 
   DayScheduleSelector.prototype.attachEvents = function() {
