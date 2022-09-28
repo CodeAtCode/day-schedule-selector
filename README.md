@@ -11,3 +11,4 @@ Check `src/index.js` for the various parameters.
 * Format hours 12/24
 * Select/Delesect multiple timeslots [#42](https://github.com/artsy/day-schedule-selector/pull/42/), require a click to the first slot and to the latest one
 * Trigger events on select/deselect [#34](https://github.com/artsy/day-schedule-selector/pull/34) with some changes
+* Generate Object on `selecting/deselecting.artsy.dayScheduleSelector` event
